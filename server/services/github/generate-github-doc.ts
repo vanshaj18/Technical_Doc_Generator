@@ -10,7 +10,8 @@ export async function generateGithubDoc(repoURL: string){
     // this will only work for public repos
     // todo: add api for handling private repos
     const repoRes = await getGithubRepo(owner, repo);
-    
+    const repoData = (repoRes.data) as RepoData;
+
     if (repoRes.status !== 200) {
         return { status: repoRes.status, errorText: repoRes.errorText };
     }
@@ -18,8 +19,6 @@ export async function generateGithubDoc(repoURL: string){
     if (!repoRes.data || typeof repoRes.data === "undefined" || repoRes.data === null) {
         return { status: 500, errorText: "Repository data is unknown or missing." };
     }
-
-    const repoData = repoRes.data as RepoData;
     const default_branch = repoData.default_branch;
 
     // now with the default branch will call 
@@ -39,10 +38,12 @@ export async function generateGithubDoc(repoURL: string){
         /\.(ts|js|tsx|jsx|md|json|yml|yaml|py|go|java|c|cpp)$/i.test(f.path)
     );
 
-    // using the files fetch the raw markdown of the github repo using
-    // raw.githubusercontent.com 
+    // // using the files fetch the raw markdown of the github repo using
+    // // raw.githubusercontent.com 
     const repoRawResult = await getRawGithubRepo(files, owner, repo, default_branch)
     const results = repoRawResult.files
+
+    console.log(repoRawResult);
 
     return { 
         status: 200,
@@ -55,7 +56,7 @@ export async function generateGithubDoc(repoURL: string){
                 language: repoData.language,
                 default_branch,
             },
-            files: results
+            files: results // this contains the raw intake from the code files
         }
     }
 }

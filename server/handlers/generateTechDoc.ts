@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { generateGithubDoc } from '../services/github/generate-github-doc';
+import { GithubRawToDoc } from '../services/agent/agent-api';
 
 export async function generateTechDocHandler(req: Request, res: Response) {
     
@@ -15,7 +16,22 @@ export async function generateTechDocHandler(req: Request, res: Response) {
             if (githubRes.status !== 200) {
                 return res.status(githubRes.status).json({ error: githubRes.errorText || 'Error generating GitHub doc.' });
             }
-            return res.status(200).json({ message: 'Github Repo Raw generated successfully'});
+            console.log(githubRes);
+
+            //THE RESULT WILL BE CONSUMED BY LLM MODULE TO
+            // GENERATE THE OUTPUT IN BEAUTIFUL FORMAT
+            const llminput = githubRes.data;
+            const modelOutput = await GithubRawToDoc(llminput);
+
+            if (modelOutput.status !== 200){
+                return res.status(modelOutput.status).json( {
+                    error: modelOutput.errorText || ' Error generating model output from Github Raw Data input'
+                })
+            }
+
+            return res.status(200).json({
+                data: modelOutput.result
+            })
         }
 
         else {

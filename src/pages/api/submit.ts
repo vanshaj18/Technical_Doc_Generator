@@ -1,6 +1,8 @@
 const api = `${process.env.NEXT_PUBLIC_SERVER_API}`;
 if (!api) {
-  throw new Error('API endpoint is not defined. Please set NEXT_PUBLIC_SERVER_API in your environment variables.');
+  throw new Error(`API endpoint is not defined. 
+    Please set NEXT_PUBLIC_SERVER_API 
+    in your environment variables.`);
 }
 
 const handleSubmit = async (input: { type: "github" | "website"; url: string }) => {
@@ -20,6 +22,15 @@ const handleSubmit = async (input: { type: "github" | "website"; url: string }) 
     }
     const data = await res.json();
     console.log('Response:', data);
+
+    if (data.status !== 200) { 
+      console.error( 'Error generating documentation: ', data.errorText);
+      return;
+    }
+
+    return {
+      result: data.data
+    }
 
   } catch (error) {
     console.error('Error generating documentation:', error);

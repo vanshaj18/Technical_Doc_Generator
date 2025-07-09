@@ -15,11 +15,13 @@
  */
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { parseCodeFile } from '../parsers/code/parseCodeFile';
 
 dotenv.config();
 
 const BearerToken = process.env.GITHUB_BEARER_TOKEN;
 const GithubBaseURL = process.env.GITHUB_BASE_URL;
+const GithubBaseApi = process.env.GITHUB_BASE_API;
 
 if (!BearerToken) {
     throw new Error("GITHUB_BEARER_TOKEN environment variable is not set.");
@@ -30,59 +32,85 @@ if (!GithubBaseURL) {
 }
 // fetching the github repo of a given user
 const getGithubRepo = async (owner: string, repo: string) => {
-    const url = `${GithubBaseURL}/${owner}/${repo}`;
-    console.log(url);
-
-    const repoRes = await axios.get(url,{
+    const url = `${GithubBaseApi}repos/${owner}/${repo}`;
+    try {
+        const repoRes = await fetch(url, {
             headers: {
-                Accept: "application/vnd.github+json",  
+                Accept: "application/vnd.github+json",
                 Authorization: `Bearer ${BearerToken}`,
                 "X-GitHub-Api-Version": "2022-11-28"
             }
-        }
-    )
+        });
 
-    if (repoRes.status !== 200) {
-        return { status: repoRes.status, errorText: repoRes.statusText };
+        if (!repoRes.ok) {
+            return { status: repoRes.status, errorText: repoRes.statusText };
+        }
+        const data = await repoRes.json();
+        return { status: repoRes.status, data: data };
+
+    } catch (error: any) {
+        return { status: 500, errorText: error.message || "Unable to fetch repo error" };
     }
-    return {status: repoRes.status, data: repoRes.data};
 }
 // get the file structure using the github repo strucutre
 const getGithubRepoFileTree = async(owner: string , repo: string, default_branch: string) => {
-    const url = `${GithubBaseURL}/${owner}/${repo}/git/trees/${default_branch}?recursive=1`;
-    const treeRes = await axios.get(url,
-        {
+    const url = `${GithubBaseApi}repos/${owner}/${repo}/git/trees/${default_branch}?recursive=1`;
+    try {
+        const treeRes = await axios.get(url, {
             headers: {
-                Accept: "application/vnd.github+json",  
+                Accept: "application/vnd.github+json",
                 Authorization: `Bearer ${BearerToken}`,
                 "X-GitHub-Api-Version": "2022-11-28"
             }
+        });
+
+        if (treeRes.status !== 200) {
+            return { status: treeRes.status, errorText: treeRes.statusText };
         }
-    )
 
-    if (treeRes.status !== 200) {
-        return { status: treeRes.status, errorText: treeRes.statusText };
+        return { status: treeRes.status, data: treeRes.data };
+    } catch (error: any) {
+        return { status: 500, errorText: error.message || "Unable to fetch repo file tree" };
     }
-
-    return {status: treeRes.status, data: treeRes.data};
 }
 
 const getRawGithubRepo = async(files: any, owner: string, repo: string, default_branch: string) => {
     const baseUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${default_branch}`;
+    console.log('here');
+    console.log(baseUrl);
     const results = await Promise.all(
-        files.map(
-            async (file: any) => {
-            const rawUrl = `${baseUrl}/${file.path}`;
-            const contentRes = await axios.get(rawUrl);
-            
-            // if unable to convert the particular file
-            // into raw markdown, return the status and errorText
-            // do not interrupt
-            if (contentRes.status !== 200) {
-                return { path: file.path, status: contentRes.status, errorText: contentRes.statusText };
-            }
-            // else return the raw markdown content.
-            return { path: file.path, status: contentRes.status, content: contentRes.data };
+        files.map(async (file: any) => {
+                const rawUrl = `${baseUrl}/${file.path}`;
+                const contentRes = await axios.get(rawUrl);
+                
+                // if unable to convert the particular file
+                // into raw markdown, return the status and errorText
+                // do not interrupt
+                if (contentRes.status !== 200) {
+                    return { path: file.path, status: contentRes.status, errorText: contentRes.statusText };
+                }
+
+                // now we pass the code file to parse and extract code
+                let parsed = null;  
+                try {
+                    const content = contentRes.data; 
+                    if (content == null || typeof content === "undefined" || content === "unknown") {
+                        parsed = { error: "Content is unknown or undefined", path: file.path };
+                    }
+                    parsed = await parseCodeFile({path: file.path, content:  content as string})
+                } catch (err) {
+                parsed = { error: "Parsing failed", path: file.path };
+                }
+
+                console.log(parsed);
+
+                // else return the raw markdown content.
+                return { 
+                    path: file.path, 
+                    status: contentRes.status, 
+                    content: contentRes.data,
+                    parsedFile: parsed
+                };
         })
     );
 
