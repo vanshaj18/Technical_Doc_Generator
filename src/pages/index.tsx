@@ -4,6 +4,7 @@ import InputForm from "./ui/form";
 import '../styles/globals.css';
 import { handleSubmit } from "./api/submit";
 import MarkdownDisplay from "./ui/markdown";
+import WaveBackground from "./ui/background";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,6 +20,7 @@ export default function Home() {
   const [markdown, setMarkdown] = React.useState<string | null>(null);
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4">
+      <WaveBackground/>
       {!markdown ? (
       // Only the form, centered
       <div className="md:w-1/2 w-full flex justify-center items-start">
