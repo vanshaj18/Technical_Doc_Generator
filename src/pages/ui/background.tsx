@@ -1,55 +1,109 @@
-// app/components/WaveBackground.tsx
-
 import React from "react";
 
 const WaveBackground = () => {
   return (
-    <div className="absolute inset-0 -z-10 overflow-hidden bg-white">
+    <div className="absolute inset-0 -z-10 overflow-hidden bg-gradient-to-b from-blue-50 to-blue-100">
       {/* Golden wave horizon */}
+      {/* Green grass horizon */}
       <svg
         viewBox="0 0 1440 320"
         className="absolute bottom-0 w-full h-auto"
         preserveAspectRatio="none"
       >
+        <defs>
+          <linearGradient id="grassGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#bbf7d0" />
+        <stop offset="100%" stopColor="#22c55e" />
+          </linearGradient>
+        </defs>
         <path
-          fill="#fef3c7"
-          d="M0,160L80,165.3C160,171,320,181,480,181.3C640,181,800,171,960,176C1120,181,1280,203,1360,213.3L1440,224L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"
-        ></path>
+          fill="url(#grassGradient)"
+          d="M0,240 Q120,220 240,250 Q360,280 480,240 Q600,200 720,260 Q840,320 960,260 Q1080,200 1200,
+          240 Q1320,280 1440,240 L1440,320 L0,320Z"
+        />
       </svg>
 
-      {/* Pigeons and letter animation */}
+      {/* Wind Lines */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {Array.from({ length: 20 }).map((_, i) => {
+          const top = `${5 + (90 / 19) * i}%`;
+          const width = `${24 + (32 * i) / 19}rem`;
+          const opacity = (5 + ((55 - 5) / 19) * i) / 100;
+          const delay = `${i * 100}ms`;
+          const animClass =
+        i % 3 === 0
+          ? "animate-wind-line1"
+          : i % 3 === 1
+          ? "animate-wind-line2"
+          : "animate-wind-line3";
 
-      {/* Pigeon 1 delivering a letter */}
+          // Split each line into segments
+          const segmentCount = 8;
+          const gap = 8; // px gap between segments
+          const segmentWidth = `calc((${width} - ${(segmentCount - 1) * gap}px) / ${segmentCount})`;
+
+          return (
+        <div
+          key={i}
+          className="absolute left-0 h-0.5 z-1"
+          style={{ top, width, opacity, pointerEvents: "none" }}
+        >
+          {Array.from({ length: segmentCount }).map((_, j) => (
+            <div
+          key={j}
+          className={`absolute h-full rounded-full ${animClass}`}
+          style={{
+            left: `calc(${j} * (${segmentWidth} + ${gap}px))`,
+            width: segmentWidth,
+            background:
+              "linear-gradient(to right,rgb(179, 180, 180),rgba(255, 255, 255, 0.79))",
+            animationDelay: delay,
+          }}
+            />
+          ))}
+        </div>
+          );
+        })}
+      </div>
+
+      {/* Letter + Pigeon Animations */}
+
+      {/* Phase 1: Letter Outline */}
       <div className="absolute bottom-40 left-10 w-14 animate-pigeonFly1">
-        <img src="/assets/letter-outline.png" alt="Pigeon" />
+        <img src="/assets/letter-outline.png" alt="Letter Outline 1" />
       </div>
       <div className="absolute bottom-40 left-10 w-8 animate-pigeonFly1">
-        <img src="/assets/letter-outline.png" alt="Pigeon" />
+        <img src="/assets/letter-outline.png" alt="Letter Outline 2" />
       </div>
       <div className="absolute bottom-40 left-10 w-6 animate-letterFly1">
-        <img src="/assets/letter-outline.png" alt="Plain Letter" />
+        <img src="/assets/letter-outline.png" alt="Letter Outline 3" />
       </div>
 
-      {/* Pigeon 2 with transformed letter */}
+      {/* Phase 2: Filled Letter */}
       <div className="absolute bottom-52 left-1/3 w-14 animate-pigeonFly2">
-        <img src="/assets/letter-filled.png" alt="Pigeon 2" />
+        <img src="/assets/letter-filled.png" alt="Filled Letter 1" />
       </div>
-       <div className="absolute bottom-52 left-1/3 w-8 animate-pigeonFly2">
-        <img src="/assets/letter-filled.png" alt="Pigeon 2" />
+      <div className="absolute bottom-52 left-1/3 w-8 animate-pigeonFly2">
+        <img src="/assets/letter-filled.png" alt="Filled Letter 2" />
       </div>
       <div className="absolute bottom-52 left-1/3 w-6 animate-letterFly2">
-        <img src="/assets/letter-filled.png" alt="Upgraded Letter" />
+        <img src="/assets/letter-filled.png" alt="Filled Letter 3" />
       </div>
 
-      {/* Final recipient side - letter arriving */}
-      <div className="absolute bottom-60 right-10 w-14 animate-arrival">
-        <img src="/assets/letter-final.png" alt="Final Letter" />
-      </div>
-      <div className="absolute bottom-60 right-10 w-12 animate-arrival">
-        <img src="/assets/letter-final.png" alt="Final Letter" />
-      </div>
-      <div className="absolute bottom-60 right-10 w-10 animate-arrival">
-        <img src="/assets/letter-final.png" alt="Final Letter" />
+      {/* Final Phase: Letter Arriving with Hover Tooltip */}
+      <div className="absolute bottom-60 right-10 flex flex-col gap-2">
+        {["w-14", "w-12", "w-10"].map((size, i) => (
+          <div key={i} className={`relative ${size} animate-arrival group`}>
+            <img
+              src="/assets/letter-final.png"
+              alt="Final Letter"
+              className="cursor-pointer"
+            />
+            <div className="absolute bottom-full mb-2 right-0 bg-black text-white text-xs px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Auto-generated Technical Doc
+            </div>
+          </div>
+        ))}
       </div>
 
       <style jsx>{`
@@ -71,6 +125,18 @@ const WaveBackground = () => {
 
         .animate-arrival {
           animation: letterArrive 6s ease-in-out infinite;
+        }
+
+        .animate-wind-line1 {
+          animation: windLine1 6s linear infinite;
+        }
+
+        .animate-wind-line2 {
+          animation: windLine2 7s linear infinite;
+        }
+
+        .animate-wind-line3 {
+          animation: windLine3 8s linear infinite;
         }
 
         @keyframes pigeonFly1 {
@@ -103,6 +169,25 @@ const WaveBackground = () => {
           0%, 40% { transform: translate(-5vw, 0) rotate(2deg);}
           80% { opacity: 0; transform: translate(0, 0); }
           100% { opacity: 1; transform: translate(-5vw, 0); }
+        }
+
+        @keyframes windLine1 {
+          0% { transform: translateX(-20vw); opacity: 0; }
+          30% { opacity: 0.4; }
+          70% { opacity: 0.3; }
+          100% { transform: translateX(100vw); opacity: 0; }
+        }
+
+        @keyframes windLine2 {
+          0% { transform: translateX(-10vw); opacity: 0; }
+          30% { opacity: 0.5; }
+          100% { transform: translateX(100vw); opacity: 0; }
+        }
+
+        @keyframes windLine3 {
+          0% { transform: translateX(-15vw); opacity: 0; }
+          50% { opacity: 0.4; }
+          100% { transform: translateX(100vw); opacity: 0; }
         }
       `}</style>
     </div>
