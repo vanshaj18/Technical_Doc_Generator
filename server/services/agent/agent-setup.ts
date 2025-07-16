@@ -1,5 +1,5 @@
 import { ChatOpenAI } from '@langchain/openai';
-import { PromptTemplate} from '@langchain/core/prompts';
+import { PromptTemplate } from '@langchain/core/prompts';
 
 const systemPrompt = `
 You are a technical writer and software engineer.
@@ -19,7 +19,8 @@ Structure the documentation like this:
 Use Markdown formatting.
 
 `
-const template = `
+const template = `${systemPrompt}
+
 Project Metadata:
 Name: {name}
 Description: {description}
@@ -38,15 +39,10 @@ export const getLLM = async () => {
         const model = new ChatOpenAI({
             model: 'gpt-4o',
             temperature: 0.8,
-            // max_token: ,
-            // top_p: ,
         });
         const prompt = new PromptTemplate({
             template: template,
-            inputVariables: [`metadata`, `fileSummary`],
-            partialVariables: {
-                system: systemPrompt
-            }
+            inputVariables: ['name', 'description', 'language', 'stars', 'forks', 'default_branch', 'fileSummaries']
         });
 
         const chain = prompt.pipe(model);

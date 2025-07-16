@@ -3,8 +3,8 @@ import { summarizeMetadata, summarizeParsedFiles } from "./convertGithubToDoc";
 
 // call the parsing services to parse the raw result from github
 const buildLangchainInput = async (data: {
-  metadata: any;
-  files: any[];
+    metadata: any;
+    files: any[];
 }) => {
     const { metadata, files } = data;
 
@@ -38,7 +38,7 @@ export async function GithubRawToDoc(githubRawData: any) {
     const files = githubRawData.files;
 
     // prepare the data for LangChain
-    const langChainInput = await buildLangchainInput({metadata: metaData, files: files});
+    const langChainInput = await buildLangchainInput({ metadata: metaData, files: files });
 
     if (langChainInput.status !== 200) {
         return {
@@ -58,12 +58,17 @@ export async function GithubRawToDoc(githubRawData: any) {
 
     // Pass the langChainInput to the LLM Chain
     const chainInput = {
-        metadata: langChainInput.metadata?.data,
-        fileSummary: langChainInput.fileSummary
+        name: metaData.name || "Unknown",
+        description: metaData.description || "No description available",
+        language: metaData.language || "Unknown",
+        stars: metaData.stars || 0,
+        forks: metaData.forks || 0,
+        default_branch: metaData.default_branch || "main",
+        fileSummaries: langChainInput.fileSummary
     };
     const markDownResult = await chain.invoke(chainInput)
     const markDownText = markDownResult.text
-    if (!markDownText){
+    if (!markDownText) {
         return {
             status: 500,
             errorText: " Failed to generate documentation "
